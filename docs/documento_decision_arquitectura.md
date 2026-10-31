@@ -17,7 +17,7 @@ Los requisitos que necesito cumplir son:
 
 ## Diagrama de arquitectura
 
-![Diagrama de Arquitectura](docs/Diagrama_Arquitectura.png)
+![Diagrama de Arquitectura](Diagrama_Arquitectura.png)
 
 ## Comparación de candidatos
 
