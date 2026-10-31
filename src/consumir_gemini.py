@@ -43,5 +43,10 @@ except (ValueError, RuntimeError) as error:
     print("No se pudo completar la operación: ", error)
 
     
-    
+url, body = armar_peticion(pregunta)
+respuesta_json = enviar_peticion(url, body)
+metadata = respuesta_json["usageMetadata"]
+print("Tokens de entrada:", metadata['promptTokenCount'])
+print("Tokens de salida:", metadata['candidatesTokenCount'])
+print("Total:", metadata['totalTokenCount'])    
     
