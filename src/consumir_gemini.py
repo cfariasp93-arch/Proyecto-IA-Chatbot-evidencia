@@ -1,25 +1,21 @@
-import json
 import os
-import re
 import requests
 from dotenv import load_dotenv
-
+ 
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = os.getenv("GEMINI_API_KEY2")
 URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
 MODELO = "gemini-3.6-flash"
-
-
+ 
+ 
 def calcular_costo(datos, precio_entrada, precio_salida):
     uso = datos["usageMetadata"]
     tokens_entrada = uso["promptTokenCount"]
-    # Los tokens de razonamiento se cobran como salida y vienen aparte
+    # CAMBIO: los tokens de razonamiento se cobran como salida y vienen aparte
     tokens_salida = uso.get("candidatesTokenCount", 0) + uso.get("thoughtsTokenCount", 0)
     return (tokens_entrada * precio_entrada) + (tokens_salida * precio_salida)
-
-
-# CAMBIO: acepta system_instruction y response_schema (solo por nombre, para evitar confusiones
-# con 'modelo'). Las llamadas anteriores, como armar_peticion(pregunta, modelo), siguen igual.
+ 
+ 
 def armar_peticion(pregunta, modelo=MODELO, *, system_instruction=None, response_schema=None):
     API_KEY = os.getenv("GEMINI_API_KEY")
     if not pregunta:
@@ -34,51 +30,45 @@ def armar_peticion(pregunta, modelo=MODELO, *, system_instruction=None, response
             "responseSchema": response_schema,
         }
     return url, body
-
-
+ 
+ 
 def enviar_peticion(url, body):
     try:
         respuesta = requests.post(url, json=body)
     except requests.exceptions.ConnectionError:
         raise RuntimeError("No se pudo conectar con el servicio. Intenta de nuevo en unos segundos.")
+
+    # NUEVO: traducir códigos HTTP a las excepciones que el resto del código ya maneja
+    if respuesta.status_code in (401, 403):
+        raise ValueError("Credencial inválida o sin permisos. Revisa tu GEMINI_API_KEY.")
+    if respuesta.status_code == 429 or respuesta.status_code >= 500:
+        raise TimeoutError(f"El servicio no está disponible (HTTP {respuesta.status_code}). Se reintentará.")
+
     try:
         datos = respuesta.json()
     except requests.exceptions.JSONDecodeError:
         raise RuntimeError("La respuesta del servicio no llegó en el formato esperado.")
-    # Si la API devuelve un error, mostrar su mensaje real
     if isinstance(datos, dict) and "error" in datos:
         error = datos["error"]
         mensaje = error.get("message", error) if isinstance(error, dict) else error
         raise RuntimeError(f"El servicio devolvió un error: {mensaje}")
     return datos
-
-
+ 
+ 
 def extraer_texto(datos):
     try:
         return datos["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError):
         raise RuntimeError("La respuesta no trae el texto generado en el lugar esperado.")
-
-
-# NUEVO: convierte el texto del modelo en un diccionario; lanza ValueError si no es JSON válido
-def parsear_respuesta_json(texto):
-    limpio = re.sub(r"^```(?:json)?|```$", "", texto.strip(), flags=re.MULTILINE).strip()
-    try:
-        datos = json.loads(limpio)
-    except json.JSONDecodeError:
-        raise ValueError("La respuesta no es un JSON válido.")
-    if not isinstance(datos, dict):
-        raise ValueError("La respuesta no tiene la estructura esperada (se esperaba un objeto JSON).")
-    return datos
-
-
+ 
+ 
 def obtener_dato_de_prueba(pregunta):
     url, body = armar_peticion(pregunta)
     datos = enviar_peticion(url, body)
     return extraer_texto(datos)
-
-
-# La prueba de conexión solo corre si ejecutas este archivo directamente
+ 
+ 
+# CAMBIO: la prueba de conexión solo corre si ejecutas este archivo directamente
 if __name__ == "__main__":
     try:
         print(obtener_dato_de_prueba("Confirma en una frase corta que esta conexión funciona"))
