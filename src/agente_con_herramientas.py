@@ -1,82 +1,274 @@
+import os
+
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langchain_classic.agents import (
-    AgentExecutor,
-    create_tool_calling_agent,
-)
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    MessagesPlaceholder,
-)
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 
 load_dotenv()
 
-modelo = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+clave = os.getenv("GEMINI_API_KEY")
+nombre_modelo = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
-#Tool/herramienta es uan funcion comun de python, Descripción en lenguaje natura sera lo que el model lea  para decidir si elige o no esa herrramienta
+if not clave:
+    raise ValueError("Falta GEMINI_API_KEY en el archivo .env")
 
+PRODUCTOS = {
+    "T01": {"nombre": "Teclado", "precio": 10000, "stock": 8},
+    "M02": {"nombre": "Mouse", "precio": 6000, "stock": 12}
+}
 
 @tool
-def buscar_en_documentacion(consulta:str) -> str:
+def consultar_precio(consulta: str) -> str:
+    """Consulta nombre, precio en CLP y stock de un producto.
+    Acepta su nombre, como teclado o mouse, o su código, como T01.
+    Úsala cuando el usuario pregunte por precio o disponibilidad.
+    No calcula cotizaciones ni realiza compras.
     """
-    Busca informacion relevante de la documentar interna del producto.
-    Usar cuando la pregunta es sobre como funciona algo del sistema.
-    """
-    documentacion = {
-        "reintentos": "El cliente reintenta hasta 3 veces ante un TimeoutError, con espera creciente",
-        "costos": "El costo se calcula a partir del totalTokenCount, según la tarifa vigente."
-    }
+    consulta_limpia = consulta.strip().casefold()
     
-    for clave, texto in documentacion.items():
-        if clave in consulta.lower():
-            return texto
-    return "No se encontró información sobre esa consulta en la documentación."
+    for codigo, producto in PRODUCTOS.items():
+        coincide_codigo = consulta_limpia == codigo.casefold()
+        coincide_nombre = consulta_limpia == producto["nombre"].casefold()
+        
+        if coincide_codigo or coincide_nombre:
+            return (
+                f"Producto: {producto['nombre']}. "
+                f"Precio unitario: {producto['precio']} CLP. "
+                f"Stock disponible: {producto['stock']} unidades."
+            )
+            
+    return "Producto no encontrado. Pide al usuario que revise el nombre o código."
 
-   
 @tool
-def calcular(expresion: str) -> str:
+def cotizar_compra(precio_unitario: int, cantidad: int) -> str:
+    """Calcula una cotización en CLP con precio unitario y cantidad conocidos.
+    Incluye un despacho fijo de 2500 CLP.
+    Úsala cuando el usuario necesite calcular un total.
+    No consulta productos, no verifica stock y no realiza compras.
     """
-    Calcula una expresión matemática simple, como '350 + 250'.
-    Usar cuando la pregunta es sobre cálculos matemáticos.
-    """
-    permitido = set("0123456789+-*/(). ")
-    if not set(expresion) <= permitido:
-        return "Expresión no permitida."
-    try:
-        return str(eval(expresion))
-    except Exception as e:
-        return f"Error al evaluar: {e}"
+    if precio_unitario <= 0 or cantidad <= 0:
+        return "Error: el precio y la cantidad deben ser mayores que cero."
     
-herramientas = [buscar_en_documentacion, calcular] # Lista de herramientas
+    subtotal = precio_unitario * cantidad
+    despacho = 2500
+    total = subtotal + despacho
+    
+    return (
+        f"Subtotal: {subtotal} CLP. "
+        f"Despacho: {despacho} CLP. "
+        f"Total: {total} CLP."
+    )
+    
+modelo = ChatGoogleGenerativeAI(
+    model=nombre_modelo,
+    api_key=clave,
+    temperature=0,
+    timeout=20,
+    max_retries=0,
+)
 
-#PLANTILLA,con systemm_instrucions
-prompt_agente = ChatPromptTemplate.from_messages([
-    (
-    "system", "eres un asistente que responde preguntas usando las herramientas disponibles cuando las necesites."
-    ),
-    (
-        "human", "{entrada}"
-    ),
-    MessagesPlaceholder("agent_scratchpad") #El espacio dodne langchain va anotando, paso/ciclos  razonar-actuar-observar, que herramients llamo y que devolvieron
+herramientas = [consultar_precio, cotizar_compra]
+    
+instrucciones = (
+    "Eres un asistente de una tienda de práctica. Responde en español. "
+    "Para consultar precios o stock del catálogo, usa consultar_producto. "
+    "Para calcular totales, usa cotizar_compra. "
+    "Si el usuario menciona un producto por nombre o código y pide una cotización, "
+    "consulta primero su precio. "
+    "Si el usuario proporciona un precio explícito, puedes cotizar directamente. "
+    "No inventes productos, precios, cantidades ni resultados. "
+    "Si falta información, pídela. "
+    "Si el producto no existe, informa eso sin inventar una cotización. "
+    "Si la cantidad solicitada supera el stock consultado, informa la limitación. "
+    "Para un saludo, responde directamente sin usar herramientas. "
+    "Solo informas y cotizas; no realizas compras."
+)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", instrucciones),
+    ("human", "{entrada}"),
+    MessagesPlaceholder("agent_scratchpad"),
 ])
 
-# Agente: modelo, herramients, prompt, formato
-
 agente = create_tool_calling_agent(
-    modelo, herramientas, prompt_agente
+    llm=modelo,
+    tools=herramientas,
+    prompt=prompt,
 )
 
-#Orquestador: es el que controla el ciclo entre razonar-actuar-observar
-ejecutor_agente = AgentExecutor(
+ejecutor = AgentExecutor(
     agent=agente,
     tools=herramientas,
-    verbose=True, #imprimir los pasos que va siguiendo
+    return_intermediate_steps=True,
+    verbose=False,
+    max_iterations=4,
 )
 
-resultado = ejecutor_agente.invoke(
-    {"entrada": "¿Cuanatas veces reinte el cliente y cuanto seria eso multiplicado por 2?"}
-)
+def probar(entrada: str):
+    print("\nPREGUNTA:", entrada)
 
-print("Respuesta final:", resultado["output"])
+    resultado = ejecutor.invoke({"entrada": entrada})
+    pasos = resultado["intermediate_steps"]
+
+    print("\nTRAZA DE HERRAMIENTAS:")
+
+    if not pasos:
+        print("No se utilizaron herramientas.")
+        
+    for numero, (accion, observacion) in enumerate(pasos, start=1):
+        print(f"\nPaso {numero}")
+        print("Herramienta:", accion.tool)
+        print("Argumentos:", accion.tool_input)
+        print("Observación:", observacion)
+
+    print("\nRESPUESTA FINAL:")
+    
+    salida = resultado["output"]
+    
+    if isinstance(salida, str):
+        print(salida)
+    else:
+        texto = "\n".join(
+            bloque["text"]
+            for bloque in salida
+            if isinstance(bloque, dict)
+            and bloque.get("type") == "text"
+            and isinstance(bloque.get("text"), str)
+        )
+        print(texto)
+        
+if __name__ == "__main__":
+    print("Asistente de tienda")
+    
+    nombres = ", ".join(
+        producto["nombre"]
+        for producto in PRODUCTOS.values()
+    )
+    
+    print("Productos disponibles:", nombres)
+    print("Escribe 'salir' para terminar.")
+    
+    while True:
+        entrada = input("\nTu pregunta: ").strip()
+        
+        if entrada.lower() == "salir":
+            break
+        
+        if not entrada:
+            continue
+        
+        probar(entrada)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# from dotenv import load_dotenv
+# from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_core.tools import tool
+# from langchain_classic.agents import (
+#     AgentExecutor,
+#     create_tool_calling_agent,
+# )
+# from langchain_core.prompts import (
+#     ChatPromptTemplate,
+#     MessagesPlaceholder,
+# )
+
+# load_dotenv()
+
+# modelo = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+
+# #Tool/herramienta es uan funcion comun de python, Descripción en lenguaje natura sera lo que el model lea  para decidir si elige o no esa herrramienta
+
+
+# @tool
+# def buscar_en_documentacion(consulta:str) -> str:
+#     """
+#     Busca informacion relevante de la documentar interna del producto.
+#     Usar cuando la pregunta es sobre como funciona algo del sistema.
+#     """
+#     documentacion = {
+#         "reintentos": "El cliente reintenta hasta 3 veces ante un TimeoutError, con espera creciente",
+#         "costos": "El costo se calcula a partir del totalTokenCount, según la tarifa vigente."
+#     }
+    
+#     for clave, texto in documentacion.items():
+#         if clave in consulta.lower():
+#             return texto
+#     return "No se encontró información sobre esa consulta en la documentación."
+
+   
+# @tool
+# def calcular(expresion: str) -> str:
+#     """
+#     Calcula una expresión matemática simple, como '350 + 250'.
+#     Usar cuando la pregunta es sobre cálculos matemáticos.
+#     """
+#     permitido = set("0123456789+-*/(). ")
+#     if not set(expresion) <= permitido:
+#         return "Expresión no permitida."
+#     try:
+#         return str(eval(expresion))
+#     except Exception as e:
+#         return f"Error al evaluar: {e}"
+    
+# herramientas = [buscar_en_documentacion, calcular] # Lista de herramientas
+
+# #PLANTILLA,con systemm_instrucions
+# prompt_agente = ChatPromptTemplate.from_messages([
+#     (
+#     "system", "eres un asistente que responde preguntas usando las herramientas disponibles cuando las necesites."
+#     ),
+#     (
+#         "human", "{entrada}"
+#     ),
+#     MessagesPlaceholder("agent_scratchpad") #El espacio dodne langchain va anotando, paso/ciclos  razonar-actuar-observar, que herramients llamo y que devolvieron
+# ])
+
+# # Agente: modelo, herramients, prompt, formato
+
+# agente = create_tool_calling_agent(
+#     modelo, herramientas, prompt_agente
+# )
+
+# #Orquestador: es el que controla el ciclo entre razonar-actuar-observar
+# ejecutor_agente = AgentExecutor(
+#     agent=agente,
+#     tools=herramientas,
+#     verbose=True, #imprimir los pasos que va siguiendo
+# )
+
+# resultado = ejecutor_agente.invoke(
+#     {"entrada": "¿Cuanatas veces reinte el cliente y cuanto seria eso multiplicado por 2?"}
+# )
+
+# print("Respuesta final:", resultado["output"])
 
