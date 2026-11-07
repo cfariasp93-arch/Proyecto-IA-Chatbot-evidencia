@@ -1,0 +1,142 @@
+[
+  {
+    "consulta": "¿En qué año advirtieron Lindqvist y Tarasova sobre las métricas?",
+    "respuesta": "Lindqvist y Tarasova advirtieron en el año 2020 que ninguna métrica por sí sola captura la totalidad del rendimiento de un sistema.",
+    "precision": 0.2727272727272727,
+    "cobertura": 0.8571428571428571,
+    "f1": 0.41379310344827586
+  },
+  {
+    "consulta": "¿Por qué la métrica F1 es más fiable que la exactitud con clases desbalanceadas?",
+    "respuesta": "La métrica F1 es más fiable que la exactitud en contextos con clases desbalanceadas porque equilibra la precisión y la exhaustividad, según sostiene Okonkwo-Reyes (2021).",
+    "precision": 0.32,
+    "cobertura": 1.0,
+    "f1": 0.48484848484848486
+  },
+  {
+    "consulta": "¿Con qué se recomienda combinar F1 para interpretar mejor los resultados?",
+    "respuesta": "Según Brandão et al. (2022), se recomienda combinar la métrica F1 con curvas ROC para mejorar la interpretación de los resultados.",
+    "precision": 0.3333333333333333,
+    "cobertura": 1.0,
+    "f1": 0.5
+  },
+  {
+    "consulta": "¿Basta una sola métrica para evaluar un sistema?",
+    "respuesta": "No, según Lindqvist y Tarasova (2020), ninguna métrica por sí sola captura la totalidad del rendimiento de un sistema. Por ello, investigaciones como la de Brandão et al. (2022) sugieren combinar distintas métricas para mejorar la interpretación de los resultados.",
+    "precision": 0.35,
+    "cobertura": 1.0,
+    "f1": 0.5185185185185185
+  },
+  {
+    "consulta": "¿Para qué sirve la validación cruzada según el texto?",
+    "respuesta": "Según el texto, la validación cruzada sirve para evaluar los modelos y reducir el sesgo de muestreo.",
+    "precision": 0.4117647058823529,
+    "cobertura": 1.0,
+    "f1": 0.5833333333333334
+  },
+  {
+    "consulta": "¿Qué dice el texto sobre el uso de redes neuronales profundas?",
+    "respuesta": "El texto no proporciona información sobre las redes neuronales profundas, por lo que el caso requiere revisión.",
+    "precision": 0.5294117647058824,
+    "cobertura": 0.8181818181818182,
+    "f1": 0.6428571428571428
+  },
+  {
+    "consulta": "¿Qué opina Fernández (2024) sobre la validación cruzada?",
+    "respuesta": "El texto no menciona a Fernández (2024), por lo que el caso requiere revisión.",
+    "precision": 0.6428571428571429,
+    "cobertura": 0.6428571428571429,
+    "f1": 0.6428571428571429
+  },
+  {
+    "consulta": "¿En qué año se publicó el trabajo de Okonkwo-Reyes?",
+    "respuesta": "El trabajo de Okonkwo-Reyes fue publicado en el año 2021.",
+    "precision": 0.6,
+    "cobertura": 0.75,
+    "f1": 0.6666666666666665
+  },
+  {
+    "consulta": "¿Qué autores mencionan la métrica F1 de forma directa?",
+    "respuesta": "Los autores que mencionan la métrica F1 de forma directa son Okonkwo-Reyes (2021) y Brandão et al. (2022).",
+    "precision": 0.5,
+    "cobertura": 1.0,
+    "f1": 0.6666666666666666
+  },
+  {
+    "consulta": "¿Qué afirma Okonkwo-Reyes sobre la métrica F1?",
+    "respuesta": "Okonkwo-Reyes sostiene que la métrica F1 es más fiable que la exactitud en contextos con clases desbalanceadas. Esto se debe a que dicha métrica equilibra la precisión y la exhaustividad.",
+    "precision": 0.5333333333333333,
+    "cobertura": 0.9411764705882353,
+    "f1": 0.6808510638297872
+  },
+  {
+    "consulta": "¿Cuándo tienden a sobreajustarse los modelos de clasificación supervisada?",
+    "respuesta": "Según Valdivieso y Marchetti (2019), los modelos de clasificación supervisada tienden a sobreajustarse cuando el conjunto de entrenamiento carece de diversidad semántica.",
+    "precision": 0.5454545454545454,
+    "cobertura": 1.0,
+    "f1": 0.7058823529411764
+  },
+  {
+    "consulta": "¿Qué dos medidas equilibra la métrica F1?",
+    "respuesta": "Según el texto, la métrica F1 equilibra la precisión y la exhaustividad.",
+    "precision": 0.5833333333333334,
+    "cobertura": 1.0,
+    "f1": 0.7368421052631579
+  },
+  {
+    "consulta": "¿Qué advierten Lindqvist y Tarasova?",
+    "respuesta": "Lindqvist y Tarasova advierten que ninguna métrica por sí sola es capaz de capturar la totalidad del rendimiento de un sistema.",
+    "precision": 0.6666666666666666,
+    "cobertura": 0.9333333333333333,
+    "f1": 0.7777777777777778
+  },
+  {
+    "consulta": "¿Qué autor publicó primero, Valdivieso y Marchetti o Haddad y Quispe-Navarro?",
+    "respuesta": "Valdivieso y Marchetti publicaron primero, en el año 2019, mientras que Haddad y Quispe-Navarro publicaron en 2023.",
+    "precision": 0.7058823529411765,
+    "cobertura": 0.9230769230769231,
+    "f1": 0.8000000000000002
+  },
+  {
+    "consulta": "¿Qué demostraron Brandão et al. en su revisión?",
+    "respuesta": "Brandão et al. demostraron que combinar la métrica F1 con curvas ROC mejora la interpretación de los resultados.",
+    "precision": 0.7222222222222222,
+    "cobertura": 1.0,
+    "f1": 0.8387096774193548
+  },
+  {
+    "consulta": "¿En qué año publicaron Valdivieso y Marchetti su trabajo?",
+    "respuesta": "Valdivieso y Marchetti publicaron su trabajo en el año 2019.",
+    "precision": 0.8,
+    "cobertura": 1.0,
+    "f1": 0.888888888888889
+  },
+  {
+    "consulta": "¿En qué año publicaron Brandão et al. su revisión?",
+    "respuesta": "Brandão et al. publicaron su revisión en el año 2022.",
+    "precision": 0.8,
+    "cobertura": 1.0,
+    "f1": 0.888888888888889
+  },
+  {
+    "consulta": "¿Qué proponen Haddad y Quispe-Navarro?",
+    "respuesta": "Haddad y Quispe-Navarro proponen evaluar siempre los modelos con validación cruzada para reducir el sesgo de muestreo.",
+    "precision": 0.8235294117647058,
+    "cobertura": 1.0,
+    "f1": 0.9032258064516129
+  },
+  {
+    "consulta": "¿En qué año se publicó el trabajo de Haddad y Quispe-Navarro?",
+    "respuesta": "El trabajo de Haddad y Quispe-Navarro se publicó en el año 2023.",
+    "precision": 0.8333333333333334,
+    "cobertura": 1.0,
+    "f1": 0.9090909090909091
+  },
+  {
+    "consulta": "¿Qué sostienen Valdivieso y Marchetti sobre los modelos supervisados?",
+    "respuesta": "Valdivieso y Marchetti sostienen que los modelos de clasificación supervisada tienden a sobreajustarse cuando el conjunto de entrenamiento carece de diversidad semántica.",
+    "precision": 0.8636363636363636,
+    "cobertura": 1.0,
+    "f1": 0.9268292682926829
+  }
+]
